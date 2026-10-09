@@ -81,6 +81,15 @@ Future<void> main(List<String> args) async {
     if (!valid) throw StateError(reason);
   }
 
+  stdout.writeln(
+    const JsonEncoder.withIndent('  ').convert({
+      'single': text.recipe.toJson(),
+      'singleWarnings': text.warnings,
+      'multiple': multiple.recipes.map((r) => r.toJson()).toList(),
+      'multipleWarnings': multiple.warnings,
+    }),
+  );
+
   require(
     text.recipe.ingredients.length == 4,
     'Expected all four edible ingredients',
@@ -129,14 +138,6 @@ Future<void> main(List<String> args) async {
   require(
     !multiple.recipes.last.steps.join().contains('четырьмястами'),
     'First recipe cannot leak into second',
-  );
-  stdout.writeln(
-    const JsonEncoder.withIndent('  ').convert({
-      'single': text.recipe.toJson(),
-      'singleWarnings': text.warnings,
-      'multiple': multiple.recipes.map((r) => r.toJson()).toList(),
-      'multipleWarnings': multiple.warnings,
-    }),
   );
   stdout.writeln(
     'Actual Qwen3 4B: quantities, unknown amounts, source evidence, separate recipes and ad exclusion passed.',

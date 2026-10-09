@@ -32,6 +32,50 @@ LocalAiResult decode(List<String> outputs, List<String> fragments) =>
     );
 
 void main() {
+  test(
+    'quantities on a shared source line cannot be borrowed from another ingredient',
+    () {
+      final data = answer();
+      data['ingredients'] = [
+        {
+          'name': 'Мука',
+          'quantity': '300 мл',
+          'evidence': [1],
+        },
+        {
+          'name': 'Молоко',
+          'quantity': '200 г',
+          'evidence': [1],
+        },
+      ];
+      data['steps'] = [];
+      final result = decode(
+        [jsonEncode(data)],
+        ['Берём 200 г муки и 300 мл молока.'],
+      );
+      expect(result.recipe.ingredients, [
+        'Мука — количество не указано',
+        'Молоко — количество не указано',
+      ]);
+      data['ingredients'] = [
+        {
+          'name': 'Мука',
+          'quantity': '200 г',
+          'evidence': [1],
+        },
+        {
+          'name': 'Молоко',
+          'quantity': '300 мл',
+          'evidence': [1],
+        },
+      ];
+      final corrected = decode(
+        [jsonEncode(data)],
+        ['Берём 200 г муки и 300 мл молока.'],
+      );
+      expect(corrected.recipe.ingredients, ['Мука — 200 г', 'Молоко — 300 мл']);
+    },
+  );
   test('a piece count must be next to that ingredient in the source', () {
     final data = answer();
     data['ingredients'] = [

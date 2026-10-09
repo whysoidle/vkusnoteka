@@ -113,7 +113,26 @@ List<String> videoCookingFragments(String text) {
     r'(?<![а-я])(?:беру|бер[её]м|разбива[а-я]*|разогре[а-я]*|нагрева[а-я]*|просеи[а-я]*|всып[а-я]*|налива[а-я]*|влива[а-я]*|добавля[а-я]*|добавить|смеш[а-я]*|перемеш[а-я]*|взбива[а-я]*|жар[а-я]*|обжари[а-я]*|выпека[а-я]*|запека[а-я]*|варим|варите|варить|кипяти[а-я]*|смазыва[а-я]*|нареза[а-я]*|режем|почист[а-я]*|очист[а-я]*|замеш[а-я]*|раскат[а-я]*|выкладыва[а-я]*|переворачива[а-я]*|настояться|постоять|доводим до кипения)',
     caseSensitive: false,
   );
-  return splitTranscript(text).where(cooking.hasMatch).toList();
+  // Even a short video can contain several recipes. Never put an explicit
+  // transition to another recipe inside the same model fragment.
+  final transition = RegExp(
+    r'^(?:\[\d+:\d+\]\s*)?.{0,100}(?:перв(?:ый|ого|ому)|втор(?:ой|ого|ому)|трет(?:ий|ьего|ьему)|четверт(?:ый|ого|ому)|четвёрт(?:ый|ого|ому))\s+(?:[а-я]+\s+){0,3}рецепт',
+    caseSensitive: false,
+  );
+  final sections = <String>[];
+  final lines = <String>[];
+  for (final line in text.split('\n')) {
+    if (lines.isNotEmpty && transition.hasMatch(line)) {
+      sections.add(lines.join('\n'));
+      lines.clear();
+    }
+    lines.add(line);
+  }
+  if (lines.isNotEmpty) sections.add(lines.join('\n'));
+  return sections
+      .expand((section) => splitTranscript(section))
+      .where(cooking.hasMatch)
+      .toList();
 }
 
 /// Shared amounts cannot select a recipe; only distinct measurements or an

@@ -95,6 +95,12 @@ jobs:
       - name: Check actual local AI on Windows
         run: python scripts/check-windows-ai.py
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Vkusnoteka-Windows-AI-Validation
+          if-no-files-found: ignore
+          path: dist/windows-ai-validation/
+      - uses: actions/upload-artifact@v4
         with:
           name: Vkusnoteka-Windows-Setup
           if-no-files-found: error

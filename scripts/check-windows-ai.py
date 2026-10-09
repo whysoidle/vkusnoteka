@@ -78,6 +78,10 @@ def main():
                         outputs.append(data['content'])
                     results.append(outputs)
                 output_file.write_text(json.dumps(results, ensure_ascii=False), encoding='utf-8')
+                report = ROOT / 'dist/windows-ai-validation'
+                report.mkdir(parents=True, exist_ok=True)
+                (report / 'request.json').write_bytes(request_file.read_bytes())
+                (report / 'output.json').write_bytes(output_file.read_bytes())
                 subprocess.run([args.dart, 'run', 'tool/check_windows_ai.dart', 'check', str(request_file), str(output_file)], cwd=ROOT / 'app', check=True)
             except Exception:
                 log.flush()

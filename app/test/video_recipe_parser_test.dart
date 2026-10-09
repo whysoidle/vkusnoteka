@@ -16,6 +16,14 @@ Map<String, dynamic> steps(int index, List<int> evidence) => {
 };
 
 void main() {
+  test('short videos split at recipe transitions before inference', () {
+    const first = '[0:00] Первый рецепт: смешиваю молоко и 180 г муки.';
+    const second = '[2:00] Теперь второй рецепт — смешиваю воду и 250 г муки.';
+    final fragments = videoCookingFragments('$first\n$second');
+    expect(fragments, [first, second]);
+    expect(videoFragmentRecipeIndexes(fragments[0], outlines), [1]);
+    expect(videoFragmentRecipeIndexes(fragments[1], outlines), [2]);
+  });
   test(
     'distinct source measurements and ordinals constrain recipe selection',
     () {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/import_job.dart';
 import '../services/local_model_store.dart';
@@ -34,7 +35,7 @@ class _LocalAiSettingsState extends State<LocalAiSettings> {
         if (mounted) {
           setState(
             () => message =
-                'Локальный ИИ доступен на Android 8+ с ARM64 и на macOS 12+. На этом устройстве доступен обычный импорт.',
+                'Локальный ИИ доступен на Android 8+ с ARM64, macOS 12+ и Windows x64. На этом устройстве доступен обычный импорт.',
           );
         }
         return;
@@ -165,8 +166,26 @@ class _LocalAiSettingsState extends State<LocalAiSettings> {
               const SizedBox(height: 8),
               Text(
                 ready
-                    ? 'Установлена · 977 МБ'
-                    : 'Загрузка 977 МБ · рекомендуется Wi-Fi и 1,5 ГБ свободного места',
+                    ? 'Установлена · ${LocalModelStore.sizeLabel}'
+                    : 'Загрузка ${LocalModelStore.sizeLabel} · рекомендуется Wi-Fi и ${Platform.isWindows ? '3,5' : '1,5'} ГБ свободного места',
+              ),
+              if (Platform.isWindows) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'Работает на процессоре без отдельной установки сервисов. Рекомендуется от 8 ГБ оперативной памяти. После разбора модель выгружается из памяти.',
+                ),
+              ],
+              const ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text('Правила точного разбора'),
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      'Каждый ингредиент, количество и шаг проверяются по исходному тексту. Неизвестные количества отмечаются для проверки. Несколько рецептов из видео сохраняются отдельно; длинные субтитры разбираются по частям. Результат ограничен схемой JSON. Модель может ошибаться — проверьте карточку перед сохранением.',
+                    ),
+                  ),
+                ],
               ),
               if (busy) ...[
                 const SizedBox(height: 16),
@@ -211,9 +230,7 @@ class _LocalAiSettingsState extends State<LocalAiSettings> {
               ],
               TextButton(
                 onPressed: () => launchUrl(
-                  Uri.parse(
-                    'https://huggingface.co/litert-community/Qwen3-1.7B',
-                  ),
+                  Uri.parse(LocalModelStore.modelPage),
                   mode: LaunchMode.externalApplication,
                 ),
                 child: const Text('О модели и лицензии'),

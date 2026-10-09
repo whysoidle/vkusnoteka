@@ -651,7 +651,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Сайты и текст разбираются на устройстве. Дополнительный сервис можно использовать на Windows или при выключенном локальном ИИ на Android.',
+                'Сайты и текст разбираются на устройстве. Дополнительный сервис можно использовать при выключенном локальном ИИ.',
               ),
               const SizedBox(height: 18),
               TextFormField(

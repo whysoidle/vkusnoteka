@@ -9,6 +9,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'flutter pub get failed' }
   flutter build windows --release
   if ($LASTEXITCODE -ne 0) { throw 'Windows build failed' }
+  python (Join-Path $PSScriptRoot 'fetch-windows-ai.py')
+  if ($LASTEXITCODE -ne 0) { throw 'Local AI runtime preparation failed' }
   $VsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
   if (!(Test-Path $VsWhere)) { throw 'Install Visual Studio with Desktop development with C++ first' }
   $VsPath = & $VsWhere -latest -products '*' -property installationPath
@@ -16,6 +18,7 @@ try {
   $Crt = Get-ChildItem "$VsPath\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" -Directory | Sort-Object FullName -Descending | Select-Object -First 1
   if (!$Crt) { throw 'Visual C++ runtime not found' }
   Copy-Item "$($Crt.FullName)\*.dll" 'build\windows\x64\runner\Release\'
+  Copy-Item "$($Crt.FullName)\*.dll" 'build\windows\x64\runner\Release\LocalAI\'
 } finally { Pop-Location }
 $Compiler = Get-Command ISCC.exe -ErrorAction SilentlyContinue
 if ($Compiler) { $Iscc = $Compiler.Source }

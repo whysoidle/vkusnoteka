@@ -71,6 +71,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.6'
@@ -80,6 +83,17 @@ jobs:
         run: choco install innosetup --no-progress -y
       - shell: pwsh
         run: ./scripts/build-windows.ps1
+      - name: Verify native AI process cleanup
+        shell: pwsh
+        run: |
+          cmake -S app/windows/runner/tests -B app/build/windows-ai-tests
+          if ($LASTEXITCODE -ne 0) { throw 'AI native test configure failed' }
+          cmake --build app/build/windows-ai-tests --config Release
+          if ($LASTEXITCODE -ne 0) { throw 'AI native test build failed' }
+          ctest --test-dir app/build/windows-ai-tests -C Release --output-on-failure
+          if ($LASTEXITCODE -ne 0) { throw 'AI native lifecycle tests failed' }
+      - name: Check actual local AI on Windows
+        run: python scripts/check-windows-ai.py
       - uses: actions/upload-artifact@v4
         with:
           name: Vkusnoteka-Windows-Setup

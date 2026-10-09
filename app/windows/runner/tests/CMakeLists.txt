@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.14)
+project(windows_ai_tests LANGUAGES CXX)
+enable_testing()
+add_executable(ai_process_test ai_process_test.cpp ../ai_process.cpp)
+target_compile_features(ai_process_test PRIVATE cxx_std_17)
+target_compile_definitions(ai_process_test PRIVATE UNICODE _UNICODE NOMINMAX)
+target_compile_options(ai_process_test PRIVATE /W4 /WX /utf-8)
+add_test(NAME ai_process_lifetime COMMAND ai_process_test)

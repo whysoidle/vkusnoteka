@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:recipe_vault/services/recipe_ai_parser.dart';
+import 'package:recipe_vault/services/windows_ai_protocol.dart';
 
 Future<void> main(List<String> args) async {
   if (args.length != 3 || !['prepare', 'check'].contains(args.first)) {
@@ -22,6 +23,14 @@ Future<void> main(List<String> args) async {
         'schema': recipeAiSchema,
         'rawFragments': splitTranscript(source),
         'fragments': splitTranscript(source).map(numberedTranscript).toList(),
+        'windowsRequests': [
+          for (final fragment in splitTranscript(source))
+            windowsCompletionBody(
+              recipeAiInstruction,
+              numberedTranscript(fragment),
+              jsonEncode(recipeAiSchema),
+            ),
+        ],
       }),
     );
     stdout.writeln(

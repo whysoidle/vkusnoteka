@@ -7,6 +7,7 @@ import 'import_job.dart';
 import 'local_model_store.dart';
 import '../models/recipe.dart';
 import 'video_recipe_parser.dart';
+import 'windows_recipe_ai.dart';
 
 abstract class RecipeAi {
   Future<bool> get ready;
@@ -22,7 +23,8 @@ abstract class RecipeAi {
 
 class LocalRecipeAi implements RecipeAi {
   static const channel = MethodChannel('recipe_vault/local_ai');
-  static bool get supported => Platform.isAndroid || Platform.isMacOS;
+  static bool get supported =>
+      Platform.isAndroid || Platform.isMacOS || Platform.isWindows;
   static Future<bool> get deviceSupported async {
     if (!supported) return false;
     try {
@@ -75,20 +77,23 @@ class LocalRecipeAi implements RecipeAi {
       );
     }
     _activeId = id;
-    channel.setMethodCallHandler((call) async {
-      if (call.method == 'progress' && !job.cancelled) {
-        final data = Map<String, dynamic>.from(call.arguments as Map);
-        if (data['id'] == id) onProgress?.call(data['text'] as String);
-      }
-    });
+    if (!Platform.isWindows) {
+      channel.setMethodCallHandler((call) async {
+        if (call.method == 'progress' && !job.cancelled) {
+          final data = Map<String, dynamic>.from(call.arguments as Map);
+          if (data['id'] == id) onProgress?.call(data['text'] as String);
+        }
+      });
+    }
     final unregister = job.onCancel(() {
+      if (Platform.isWindows) return;
       channel
           .invokeMethod<void>('cancel', {'id': id})
           .catchError((Object _) {});
     });
     try {
       onProgress?.call('Загружаю локальную модель…');
-      final result = await channel.invokeMapMethod<String, dynamic>('extract', {
+      final arguments = <String, dynamic>{
         'id': id,
         'modelPath': model.file.path,
         'instruction': outlines.isEmpty
@@ -109,7 +114,17 @@ class LocalRecipeAi implements RecipeAi {
                 ),
               ),
           ],
-      });
+      };
+      final result = Platform.isWindows
+          ? await WindowsRecipeAi().extract(
+              arguments,
+              job: job,
+              onProgress: onProgress,
+            )
+          : await channel.invokeMapMethod<String, dynamic>(
+              'extract',
+              arguments,
+            );
       job.check();
       if (result == null) {
         throw const FormatException('Нет ответа локального ИИ');
@@ -142,7 +157,7 @@ class LocalRecipeAi implements RecipeAi {
       unregister();
       if (_activeId == id) {
         _activeId = null;
-        channel.setMethodCallHandler(null);
+        if (!Platform.isWindows) channel.setMethodCallHandler(null);
       }
     }
   }

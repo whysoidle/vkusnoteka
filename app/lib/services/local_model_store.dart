@@ -56,29 +56,51 @@ Future<String> _modelHash(String path, ImportJob job) async {
 
 /// A pinned, public conversion; weights never enter recipes.json.
 class LocalModelStore {
-  static const name = 'Qwen3 1.7B INT4';
-  static const size = 977184032;
-  static const checksum =
-      '2eeffef7b51bc3e1225ea69fe7aa5f417397934b56a5b6c20cc068d6fd2c918b';
-  static const downloadUrl =
-      'https://huggingface.co/litert-community/Qwen3-1.7B/resolve/'
-      '73fbc3fe8271c162a603ee66f6e7ed25b6211195/'
-      'Qwen3-1.7B_dynamic_wi4b32_afp32.litertlm';
+  static String get name =>
+      Platform.isWindows ? 'Qwen3 4B Q4_K_M' : 'Qwen3 1.7B INT4';
+  static int get size => Platform.isWindows ? windowsSize : 977184032;
+  static String get checksum => Platform.isWindows
+      ? windowsChecksum
+      : '2eeffef7b51bc3e1225ea69fe7aa5f417397934b56a5b6c20cc068d6fd2c918b';
+  static String get downloadUrl => Platform.isWindows
+      ? windowsDownloadUrl
+      : 'https://huggingface.co/litert-community/Qwen3-1.7B/resolve/'
+            '73fbc3fe8271c162a603ee66f6e7ed25b6211195/'
+            'Qwen3-1.7B_dynamic_wi4b32_afp32.litertlm';
+  static const windowsSize = 2497280256;
+  static const windowsChecksum =
+      '7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5';
+  static const windowsDownloadUrl =
+      'https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/'
+      'bc640142c66e1fdd12af0bd68f40445458f3869b/Qwen3-4B-Q4_K_M.gguf';
+  static String get modelPage => Platform.isWindows
+      ? 'https://huggingface.co/Qwen/Qwen3-4B-GGUF'
+      : 'https://huggingface.co/litert-community/Qwen3-1.7B';
+  static String get sizeLabel => Platform.isWindows ? '2,50 ГБ' : '977 МБ';
   final Directory directory;
   final Uri url;
   final int expectedSize;
   final String expectedChecksum;
+  final String fileName;
   LocalModelStore(
     this.directory, {
     Uri? url,
-    this.expectedSize = size,
-    this.expectedChecksum = checksum,
-  }) : url = url ?? Uri.parse(downloadUrl);
+    int? expectedSize,
+    String? expectedChecksum,
+    String? fileName,
+  }) : url = url ?? Uri.parse(downloadUrl),
+       expectedSize = expectedSize ?? size,
+       expectedChecksum = expectedChecksum ?? checksum,
+       fileName =
+           fileName ??
+           (Platform.isWindows
+               ? 'qwen3-4b-recipe.gguf'
+               : 'qwen-recipe.litertlm');
 
   static Future<LocalModelStore> open() async => LocalModelStore(
     Directory(p.join((await getApplicationSupportDirectory()).path, 'LocalAI')),
   );
-  File get file => File(p.join(directory.path, 'qwen-recipe.litertlm'));
+  File get file => File(p.join(directory.path, fileName));
   File get partial => File('${file.path}.part');
   Future<bool> get ready async =>
       await file.exists() && await file.length() == expectedSize;

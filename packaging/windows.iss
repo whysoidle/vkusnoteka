@@ -1,6 +1,6 @@
 #define AppName "Вкуснотека"
 #ifndef AppVersion
-  #define AppVersion "1.0.5"
+  #define AppVersion "1.0.6"
 #endif
 #define AppExeName "recipe_vault.exe"
 

@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--server', type=Path, default=ROOT / 'app/build/windows/x64/runner/Release/LocalAI/llama-server.exe')
     parser.add_argument('--model', type=Path, default=Path(tempfile.gettempdir()) / 'Вкуснотека ИИ' / 'Qwen3 4B.gguf')
     parser.add_argument('--dart', default='dart')
+    parser.add_argument('--startup-only', action='store_true')
     args = parser.parse_args()
     args.model.parent.mkdir(parents=True, exist_ok=True)
     if not args.model.exists() or args.model.stat().st_size != MODEL_SIZE:
@@ -37,8 +38,10 @@ def main():
         raise RuntimeError('Smoke test model checksum mismatch')
     with tempfile.TemporaryDirectory(prefix='vkusnoteka-smoke-') as temp:
         request_file, output_file = Path(temp) / 'request.json', Path(temp) / 'output.json'
-        subprocess.run([args.dart, 'run', 'tool/check_windows_ai.dart', 'prepare', str(request_file)], cwd=ROOT / 'app', check=True)
-        cases = json.loads(request_file.read_text(encoding='utf-8'))['cases']
+        cases = []
+        if not args.startup_only:
+            subprocess.run([args.dart, 'run', 'tool/check_windows_ai.dart', 'prepare', str(request_file)], cwd=ROOT / 'app', check=True)
+            cases = json.loads(request_file.read_text(encoding='utf-8'))['cases']
         with socket.socket() as reservation:
             reservation.bind(('127.0.0.1', 0))
             port = reservation.getsockname()[1]
@@ -48,7 +51,7 @@ def main():
                    '--host', '127.0.0.1', '--port', str(port), '--api-key', key,
                    '--ctx-size', '8192', '--parallel', '1', '--threads', str(min(os.cpu_count() or 4, 8)),
                    '--gpu-layers', '0', '--batch-size', '512', '--ubatch-size', '128',
-                   '--no-webui', '--no-context-shift', '--offline', '--log-disable']
+                   '--no-webui', '--no-context-shift', '--offline']
         with (Path(temp) / 'runtime.log').open('wb') as log:
             worker = subprocess.Popen(command, cwd=args.server.resolve().parent, stdout=log, stderr=log)
             try:
@@ -58,7 +61,7 @@ def main():
                 deadline = time.monotonic() + 180
                 while True:
                     if worker.poll() is not None:
-                        raise RuntimeError('Bundled AI worker exited during startup')
+                        raise RuntimeError(f'Bundled AI worker exited during startup: {worker.returncode} (0x{worker.returncode & 0xffffffff:08x})')
                     try:
                         with client.open(urllib.request.Request(origin + '/health', headers=headers), timeout=2) as response:
                             if response.status == 200: break
@@ -67,6 +70,9 @@ def main():
                     if time.monotonic() > deadline: raise RuntimeError('Model startup timeout')
                     time.sleep(.15)
                 results = []
+                if args.startup_only:
+                    print('Bundled runtime loaded the verified model from a Cyrillic path', flush=True)
+                    return
                 for case_index, case in enumerate(cases):
                     outputs = []
                     for index, body in enumerate(case):

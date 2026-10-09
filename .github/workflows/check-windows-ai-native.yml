@@ -7,6 +7,24 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Probe bundled Windows runtime
+        shell: pwsh
+        run: |
+          python scripts/fetch-windows-ai.py
+          if ($LASTEXITCODE -ne 0) { throw 'Runtime preparation failed' }
+          $AiRoot = Join-Path $PWD 'app/build/windows/x64/runner/Release/LocalAI'
+          $VsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $VsPath = & $VsWhere -latest -products '*' -property installationPath
+          $Crt = Get-ChildItem "$VsPath\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" -Directory | Sort-Object FullName -Descending | Select-Object -First 1
+          Copy-Item "$($Crt.FullName)\*.dll" $AiRoot
+          Push-Location $AiRoot
+          try {
+            & .\llama-server.exe --version
+            Write-Output "Runtime version exit code: $LASTEXITCODE"
+            if ($LASTEXITCODE -ne 0) { throw 'Bundled runtime could not load' }
+          } finally { Pop-Location }
+      - name: Check model startup from a Cyrillic path
+        run: python scripts/check-windows-ai.py --startup-only
       - name: Build and exercise Windows AI process ownership
         shell: pwsh
         run: |

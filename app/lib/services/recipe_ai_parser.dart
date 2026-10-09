@@ -267,8 +267,9 @@ bool _quantityBelongsTo(
         .map((noun) => distance(amount, noun))
         .reduce((a, b) => a < b ? a : b);
     if (closest <= 64 &&
-        !others.any((noun) => distance(amount, noun) <= closest))
+        !others.any((noun) => distance(amount, noun) <= closest)) {
       return true;
+    }
   }
   return false;
 }

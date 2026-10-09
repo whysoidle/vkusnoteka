@@ -1,0 +1,42 @@
+name: recipe_vault
+description: Вкуснотека — личная коллекция рецептов с чатом и синхронизацией через Яндекс Диск.
+publish_to: none
+version: 1.0.5+15
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  crypto: ^3.0.6
+  charset: ^2.0.1
+  dynamic_color: ^1.8.1
+  file_picker: ^10.3.0
+  flutter_secure_storage: ^10.0.0
+  http: ^1.4.0
+  xml: ^6.6.1
+  html: ^0.15.6
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  url_launcher: ^6.3.2
+  uuid: ^4.5.1
+  youtube_explode_dart: 3.1.0
+  flutter_web_auth_2: 5.1.0
+  pdfrx: ^2.6.5
+  pdfrx_engine: 0.6.1
+  image_picker: ^1.2.4
+  image: ^4.5.4
+  wakelock_plus: 1.5.2
+dev_dependencies:
+  leak_tracker_flutter_testing: 3.0.10
+  vm_service: 15.3.0
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/branding/
+    - assets/tessdata/
+    - assets/windows_ocr.ps1

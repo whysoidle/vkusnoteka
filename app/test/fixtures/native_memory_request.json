@@ -1,0 +1,122 @@
+{
+  "instruction": "Read the numbered Russian transcript. Return a complete recipe in Russian JSON. Use only the source, never the example below. Each evidence array contains actual source line numbers (starting at 1). Read ALL numbered lines.\nList ALL ingredients with exact quantities and units, empty quantity if unknown. Many ingredients can have the same evidence line number. List ALL cooking steps in order; each step only needs evidence line numbers, no paraphrase. Exclude ads and greetings. Include total cooking time and servings if mentioned.\nExample source: [1] Берём 100 г риса и 200 мл воды. [2] Промойте рис. [3] Варите рис в воде. [4] Готово за 20 минут, на 2 порции.\nExample JSON: {\"title\":\"Рис\",\"ingredients\":[{\"name\":\"Рис\",\"quantity\":\"100 г\",\"evidence\":[1]},{\"name\":\"Вода\",\"quantity\":\"200 мл\",\"evidence\":[1]}],\"steps\":[{\"evidence\":[2]},{\"evidence\":[3]}],\"time\":{\"value\":\"20 минут\",\"evidence\":[4]},\"servings\":{\"value\":\"2 порции\",\"evidence\":[4]},\"warnings\":[]}\nNow extract ONLY from the user source.",
+  "chatTemplate": "{% for message in messages %}{{ '<|im_start|>' + message['role'] + '\\n' }}{% if message['content'] is string %}{{ message['content'] }}{% else %}{% for part in message['content'] %}{% if part['type'] == 'text' %}{{ part['text'] }}{% endif %}{% endfor %}{% endif %}{{ '<|im_end|>\\n' }}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\\n<think>\\n\\n</think>\\n\\n' }}{% endif %}",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string"
+      },
+      "ingredients": {
+        "type": "array",
+        "maxItems": 80,
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "string"
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 8
+            }
+          },
+          "required": [
+            "name",
+            "quantity",
+            "evidence"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "steps": {
+        "type": "array",
+        "maxItems": 80,
+        "items": {
+          "type": "object",
+          "properties": {
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "maxItems": 8
+            }
+          },
+          "required": [
+            "evidence"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "time": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 8
+          }
+        },
+        "required": [
+          "value",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "servings": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxItems": 8
+          }
+        },
+        "required": [
+          "value",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "title",
+      "ingredients",
+      "steps",
+      "time",
+      "servings",
+      "warnings"
+    ],
+    "additionalProperties": false
+  },
+  "fragments": [
+    "[1] [0:00] Сегодня готовлю простые оладьи. Сразу перечислю, что беру: 200 г муки, 1 яйцо, 2 ст. л. сахара. Ещё понадобится молоко, но точное количество я не измеряла.\n[2] [0:18] Разбиваю яйцо в миску. Добавляю сахар и взбиваю венчиком.\n[3] [0:35] Теперь всыпаю муку и понемногу вливаю молоко. Перемешиваю, чтобы не было комочков.\n[4] [0:52] Разогреваю сковороду. Выкладываю тесто ложкой и обжариваю оладьи с двух сторон до золотистого цвета.\n[5] [1:20] Получается 2 порции. Всё приготовление занимает 15 минут."
+  ]
+}

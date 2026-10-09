@@ -1,0 +1,3 @@
+[
+  "{\"title\":\"Оладьи\",\"ingredients\":[{\"name\":\"Мука\",\"quantity\":\"200 г\",\"evidence\":[1]},{\"name\":\"Яйцо\",\"quantity\":\"1 шт.\",\"evidence\":[1]},{\"name\":\"Сахар\",\"quantity\":\"2 ст. л.\",\"evidence\":[1]},{\"name\":\"Молоко\",\"quantity\":\"взято понемногу\",\"evidence\":[3]}],\"steps\":[{\"evidence\":[2]},{\"evidence\":[3]},{\"evidence\":[4]},{\"evidence\":[5]}],\"time\":{\"value\":\"15 минут\",\"evidence\":[5]},\"servings\":{\"value\":\"2 порции\",\"evidence\":[5]},\"warnings\":[]}"
+]

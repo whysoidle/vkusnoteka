@@ -1,0 +1,5 @@
+Google LiteRT-LM 0.18.0
+Copyright Google LLC and The ODML Authors.
+Source: https://github.com/google-ai-edge/LiteRT-LM/tree/v0.18.0
+Native runtime used without modifications; distributed under Apache License 2.0.
+The Swift recipe bridge in this package is application code, not part of upstream LiteRT-LM.

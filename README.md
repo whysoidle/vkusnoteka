@@ -2,7 +2,7 @@
 
 Нативное приложение для Android, Windows и macOS на Flutter. На Mac — боковая панель, полупрозрачные панели и нативный Liquid Glass на macOS 26+; на более ранних версиях — системный материал окна. Интерфейс Material 3: системная палитра на поддерживаемых Android, светлая и тёмная темы, скруглённые карточки, нижняя навигация на телефоне и каталог рядом с чатом на широком экране.
 
-Готовые файлы: Android **1.0.2** — `dist/Vkusnoteka-Android-1.0.2.apk`; macOS **1.0.5** — `dist/Vkusnoteka-macOS-1.0.5.dmg` и ZIP с приложением. EXE для Windows нужно собрать по инструкции ниже: в текущей среде macOS сборка Windows недоступна. [Результаты проверок](docs/validation.md).
+Готовые файлы: Android **1.0.2** — `dist/Vkusnoteka-Android-1.0.2.apk`; macOS **1.0.5** — `dist/Vkusnoteka-macOS-1.0.5.dmg` и ZIP с приложением. Windows **1.0.5** — `dist/Vkusnoteka-Windows-1.0.5-Setup.exe` и portable ZIP; собраны на Windows-сервере GitHub Actions. [Результаты проверок](docs/validation.md).
 
 Версия **1.0.5** возвращает мягкую матовость заднего фона macOS: на macOS 26+ общий слой Liquid Glass использует вариант `regular`. Ровная заливка без диагональных полос и размытие прокручиваемого каталога под шапкой сохранены. [Описание выпуска](docs/release-1.0.5.md).
 
@@ -87,6 +87,8 @@ FLUTTER_BIN=/путь/к/flutter/bin/flutter ./scripts/build-macos.sh
 Сценарий создаёт `.app`, DMG, ZIP и контрольные суммы в `dist`. Для личной установки применяется локальная подпись; публичное распространение с нотариализацией Apple требует Developer ID. [Подробности проверки](docs/validation.md).
 
 ### Установщик Windows
+
+Готовый установщик 1.0.5 находится в `dist/Vkusnoteka-Windows-1.0.5-Setup.exe`; portable-версию нужно распаковать целиком и запустить `recipe_vault.exe`. [Повторная сборка через GitHub и доступ из VS Code](docs/windows-github.md).
 
 Установите [Inno Setup 6](https://jrsoftware.org/isinfo.php), затем из корня проекта в PowerShell:
 

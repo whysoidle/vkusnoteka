@@ -29,7 +29,7 @@ void main() {
   Map<String, dynamic> request({List<String>? schemas}) => {
     'id': 41,
     'modelPath': r'C:\Пользователи\Имя\ИИ\рецепт.gguf',
-    'instruction': recipeAiInstruction,
+    'instruction': windowsRecipeAiInstruction,
     'schema': jsonEncode(recipeAiSchema),
     'fragments': ['[1] Берём 200 г муки.', '[1] Добавляем молоко.'],
     'fragmentSchemas': ?schemas,

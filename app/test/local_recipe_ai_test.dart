@@ -33,6 +33,32 @@ LocalAiResult decode(List<String> outputs, List<String> fragments) =>
 
 void main() {
   test(
+    'spoons and containers mentioned in cooking are not food ingredients',
+    () {
+      final data = answer();
+      data['ingredients'] = [
+        for (final name in [
+          'Ложка',
+          'Столовая ложка',
+          'Кастрюля',
+          'Стакан',
+          'Сахар',
+        ])
+          {
+            'name': name,
+            'quantity': '',
+            'evidence': [1],
+          },
+      ];
+      data['steps'] = [];
+      final result = decode(
+        [jsonEncode(data)],
+        ['Берём сахар. Столовая ложка, кастрюля и стакан уже на столе.'],
+      );
+      expect(result.recipe.ingredients, ['Сахар — количество не указано']);
+    },
+  );
+  test(
     'quantities on a shared source line cannot be borrowed from another ingredient',
     () {
       final data = answer();

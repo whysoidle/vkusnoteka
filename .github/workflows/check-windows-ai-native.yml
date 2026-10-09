@@ -1,0 +1,18 @@
+name: Check Windows AI process lifecycle
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and exercise Windows AI process ownership
+        shell: pwsh
+        run: |
+          cmake -S app/windows/runner/tests -B app/build/windows-ai-tests
+          if ($LASTEXITCODE -ne 0) { throw 'AI native test configure failed' }
+          cmake --build app/build/windows-ai-tests --config Release
+          if ($LASTEXITCODE -ne 0) { throw 'AI native test build failed' }
+          ctest --test-dir app/build/windows-ai-tests -C Release --verbose
+          if ($LASTEXITCODE -ne 0) { throw 'AI native lifecycle tests failed' }

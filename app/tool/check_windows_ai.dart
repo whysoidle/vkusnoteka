@@ -38,7 +38,7 @@ Future<void> main(List<String> args) async {
           [
             for (final f in textFragments)
               windowsCompletionBody(
-                recipeAiInstruction,
+                windowsRecipeAiInstruction,
                 numberedTranscript(f),
                 jsonEncode(recipeAiSchema),
               ),

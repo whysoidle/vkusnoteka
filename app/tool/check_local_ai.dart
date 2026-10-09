@@ -26,7 +26,7 @@ Future<void> main(List<String> args) async {
         'windowsRequests': [
           for (final fragment in splitTranscript(source))
             windowsCompletionBody(
-              recipeAiInstruction,
+              windowsRecipeAiInstruction,
               numberedTranscript(fragment),
               jsonEncode(recipeAiSchema),
             ),

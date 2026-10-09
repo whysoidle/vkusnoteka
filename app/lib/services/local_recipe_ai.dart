@@ -97,7 +97,9 @@ class LocalRecipeAi implements RecipeAi {
         'id': id,
         'modelPath': model.file.path,
         'instruction': outlines.isEmpty
-            ? recipeAiInstruction
+            ? (Platform.isWindows
+                  ? windowsRecipeAiInstruction
+                  : recipeAiInstruction)
             : videoStepsInstruction(outlines),
         'chatTemplate': recipeAiChatTemplate,
         'schema': jsonEncode(

@@ -28,6 +28,7 @@ int wmain(int argc, wchar_t* argv[]) {
       (L"vkusnoteka-ai-" + std::to_wstring(GetCurrentProcessId()) + L".bin");
   const std::wstring argument = L"Рецепт с пробелами \\\"цитата\\\" и путь C:\\ИИ\\";
   DWORD before = 0, after = 0;
+  std::cout << "Checking Windows process handles across repeated imports" << std::endl;
   Require(GetProcessHandleCount(GetCurrentProcess(), &before) != 0, "handle count");
   for (int64_t id = 1; id <= 12; ++id) {
     HANDLE child = nullptr;
@@ -55,6 +56,13 @@ int wmain(int argc, wchar_t* argv[]) {
     Require(WaitForSingleObject(child, 5000) == WAIT_OBJECT_0, "worker must die");
     CloseHandle(child);
     std::filesystem::remove(file);
+    Require(GetProcessHandleCount(GetCurrentProcess(), &after) != 0, "cycle handle count");
+    std::cout << "Cycle " << id << ": " << after << " handles" << std::endl;
+    // CreateProcess and the C++ file runtime initialize process-wide Windows
+    // resources lazily. Measure every later import against the first completed
+    // lifecycle; owned process/job/thread handles must never accumulate.
+    if (id == 1) before = after;
+    else Require(after == before, "native process or job handles accumulated");
   }
   Require(GetProcessHandleCount(GetCurrentProcess(), &after) != 0, "final handle count");
   Require(after <= before, "native process or job handles leaked");

@@ -1,7 +1,7 @@
 name: recipe_vault
 description: Вкуснотека — личная коллекция рецептов с чатом и синхронизацией через Яндекс Диск.
 publish_to: none
-version: 1.0.7+17
+version: 1.0.8+18
 environment:
   sdk: '>=3.10.0 <4.0.0'
 dependencies:

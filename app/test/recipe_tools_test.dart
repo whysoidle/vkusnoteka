@@ -96,6 +96,49 @@ void main() {
     );
     expect(scaleIngredient('Сыр 45%', 2), 'Сыр 45%');
   });
+  test('portion scaling accepts comma-separated ingredient quantities', () {
+    const cases = {
+      'Куриный бульон, 800 мл': 'Куриный бульон, 1600 мл',
+      'Кокосовые сливки, 400 мл': 'Кокосовые сливки, 800 мл',
+      'Куркума, 8 г': 'Куркума, 16 г',
+      'Смесь тандури-масала,  по вкусу': 'Смесь тандури-масала,  по вкусу',
+      'Желтая паста карри , 20 г': 'Желтая паста карри , 40 г',
+      'Чеснок, 1 головка': 'Чеснок, 2 головка',
+      'Хумус, 160 г': 'Хумус, 320 г',
+    };
+    for (final entry in cases.entries) {
+      expect(scaleIngredient(entry.key, 2), entry.value);
+    }
+    expect(scaleIngredient('Куркума, 8 г', .5), 'Куркума, 4 г');
+    expect(scaleIngredient('Хумус,160 г', 2), 'Хумус,320 г');
+    expect(scaleIngredient('Молоко, 0,5 л', 2), 'Молоко, 1 л');
+    expect(scaleIngredient('Мука, 1 1/2 стакана', 2), 'Мука, 3 стакана');
+    expect(scaleIngredient('Сахар, ½ ст. л.', 2), 'Сахар, 1 ст. л.');
+    expect(scaleIngredient('Яйцо, 1–2 шт.', 2), 'Яйцо, 2–4 шт.');
+  });
+  test(
+    'quantity commas are distinct from decimals and product descriptions',
+    () {
+      expect(
+        scaleIngredient('Сливки 20,5%, 100 мл', 2),
+        'Сливки 20,5%, 200 мл',
+      );
+      expect(scaleIngredient('Сливки, 20%, 100 мл', 2), 'Сливки, 20%, 200 мл');
+      expect(
+        scaleIngredient('Томаты, нарезанные, 400 г', 2),
+        'Томаты, нарезанные, 800 г',
+      );
+      expect(scaleIngredient('Мука сорта 1, 200 г', 2), 'Мука сорта 1, 400 г');
+      expect(
+        scaleIngredient('Бульон, 800 мл — домашний', 2),
+        'Бульон, 1600 мл — домашний',
+      );
+      for (final value in ['Сливки 20,5%', 'Молоко, количество не указано']) {
+        expect(scaleIngredient(value, 2), value);
+      }
+      expect(scaleIngredient('Мука 1,5 кг', 2), 'Мука 3 кг');
+    },
+  );
   test(
     'portion and time parsing are explicit and do not assume a missing unit',
     () {

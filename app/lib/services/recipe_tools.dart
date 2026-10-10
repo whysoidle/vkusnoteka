@@ -1,5 +1,7 @@
 import '../models/recipe.dart';
 
+export 'ingredient_scaling.dart' show scaleIngredient;
+
 String normalizeWords(String text) => text
     .toLowerCase()
     .replaceAll('ё', 'е')
@@ -120,42 +122,6 @@ String formatQuantity(double value) => value
     .toStringAsFixed(2)
     .replaceFirst(RegExp(r'\.?0+$'), '')
     .replaceAll('.', ',');
-String scaleIngredient(String value, double factor) {
-  if (factor <= 0 || !factor.isFinite) throw ArgumentError('Invalid portions');
-  // Scale only the amount after a separator or directly preceding a unit/product.
-  // Numbers in product names (e.g. cream 20%) stay intact.
-  final separator = RegExp(r'\s[—–-]\s|:\s*').firstMatch(value);
-  final offset = separator?.end ?? 0;
-  final tail = value.substring(offset);
-  if (RegExp(r'по вкусу|не указан', caseSensitive: false).hasMatch(tail)) {
-    return value;
-  }
-  final amount = RegExp(
-    r'^(\s*)(\d+\s+\d+/\d+|\d+/\d+|\d+(?:[.,]\d+)?|[½¼¾⅓⅔])(?:\s*([–-])\s*(\d+(?:[.,]\d+)?))?(?=\s|$)',
-  ).firstMatch(tail);
-  if (amount == null) return value;
-  double? number(String s) {
-    const fractions = {'½': .5, '¼': .25, '¾': .75, '⅓': 1 / 3, '⅔': 2 / 3};
-    if (fractions.containsKey(s)) return fractions[s];
-    if (s.contains('/')) {
-      final parts = s.trim().split(RegExp(r'\s+'));
-      final f = parts.last.split('/');
-      final denominator = double.tryParse(f.last);
-      if (denominator == null || denominator == 0) return null;
-      return (parts.length > 1 ? double.parse(parts.first) : 0) +
-          double.parse(f.first) / denominator;
-    }
-    return double.tryParse(s.replaceAll(',', '.'));
-  }
-
-  final first = number(amount[2]!);
-  if (first == null) return value;
-  final last = amount[4] == null ? null : number(amount[4]!);
-  final scaled =
-      '${amount[1]}${formatQuantity(first * factor)}${last == null ? '' : '–${formatQuantity(last * factor)}'}';
-  return value.substring(0, offset) +
-      tail.replaceRange(amount.start, amount.end, scaled);
-}
 
 int? recipeMinutes(String text) {
   final normalized = text.toLowerCase();

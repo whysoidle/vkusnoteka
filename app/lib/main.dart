@@ -7,6 +7,8 @@ import 'services/storage.dart';
 import 'theme/appearance.dart';
 import 'theme/macos_glass.dart';
 import 'branding.dart';
+import 'widgets/app_shortcuts.dart';
+import 'widgets/desktop_swipe.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,9 +39,16 @@ Future<void> main() async {
   }
 }
 
-class RecipeVaultApp extends StatelessWidget {
+class RecipeVaultApp extends StatefulWidget {
   final AppController controller;
   const RecipeVaultApp({super.key, required this.controller});
+  @override
+  State<RecipeVaultApp> createState() => _RecipeVaultAppState();
+}
+
+class _RecipeVaultAppState extends State<RecipeVaultApp> {
+  final navigator = GlobalKey<NavigatorState>();
+  final home = GlobalKey<HomeScreenState>();
   ThemeData theme(ColorScheme scheme) {
     final base = ThemeData(
       useMaterial3: true,
@@ -71,30 +80,46 @@ class RecipeVaultApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: controller,
+    listenable: widget.controller,
     builder: (context, _) => DynamicColorBuilder(
       builder: (light, dark) => MaterialApp(
         title: appName,
+        navigatorKey: navigator,
         debugShowCheckedModeBanner: false,
         locale: const Locale('ru'),
         supportedLocales: const [Locale('ru'), Locale('en')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         scrollBehavior: const RecipeScrollBehavior(),
-        builder: (context, child) => isMac(context)
-            ? MacGlassEnvironment(child: MacWindowBackground(child: child!))
-            : child!,
+        builder: (context, child) => AppShortcuts(
+          onNewRecipe: () => home.currentState?.add(),
+          onSearch: () => home.currentState?.searchCatalog(),
+          child: DesktopSwipe(
+            onRight: () => navigator.currentState?.maybePop(),
+            child: isMac(context)
+                ? MacGlassEnvironment(child: MacWindowBackground(child: child!))
+                : child!,
+          ),
+        ),
         theme: theme(
-          appColorScheme(controller.settings.accent, Brightness.light, light),
+          appColorScheme(
+            widget.controller.settings.accent,
+            Brightness.light,
+            light,
+          ),
         ),
         darkTheme: theme(
-          appColorScheme(controller.settings.accent, Brightness.dark, dark),
+          appColorScheme(
+            widget.controller.settings.accent,
+            Brightness.dark,
+            dark,
+          ),
         ),
-        themeMode: switch (controller.settings.theme) {
+        themeMode: switch (widget.controller.settings.theme) {
           'light' => ThemeMode.light,
           'dark' => ThemeMode.dark,
           _ => ThemeMode.system,
         },
-        home: HomeScreen(controller: controller),
+        home: HomeScreen(key: home, controller: widget.controller),
       ),
     ),
   );

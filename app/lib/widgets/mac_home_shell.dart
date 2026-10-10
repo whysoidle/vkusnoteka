@@ -12,7 +12,7 @@ class MacHomeShell extends StatelessWidget {
   final String filter, collection;
   final ValueChanged<int> onTab;
   final ValueChanged<String> onFilter, onCollection;
-  final VoidCallback onAdd, onSettings, onSearch;
+  final VoidCallback onAdd, onSettings;
   const MacHomeShell({
     super.key,
     required this.controller,
@@ -26,7 +26,6 @@ class MacHomeShell extends StatelessWidget {
     required this.onCollection,
     required this.onAdd,
     required this.onSettings,
-    required this.onSearch,
   });
 
   Widget destination(
@@ -97,8 +96,6 @@ class MacHomeShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) => CallbackShortcuts(
     bindings: {
-      const SingleActivator(LogicalKeyboardKey.keyN, meta: true): onAdd,
-      const SingleActivator(LogicalKeyboardKey.keyF, meta: true): onSearch,
       const SingleActivator(LogicalKeyboardKey.comma, meta: true): onSettings,
       const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
           onTab(0),
@@ -315,7 +312,7 @@ class MacHomeShell extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
                               child: Text(
-                                '⌘ N  Новый рецепт\n⌘ F  Поиск',
+                                '⌘N / ⌥N  Новый рецепт\n⌘F / ⌥F  Поиск',
                                 style: TextStyle(
                                   color: c.onSurfaceVariant,
                                   fontSize: 11,

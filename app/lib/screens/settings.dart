@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../widgets/page_list.dart';
 import '../widgets/recipe_text.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -315,397 +316,379 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Настройки')),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: Form(
-          key: form,
-          child: ListView(
-            key: const ValueKey('settings-list'),
-            padding: const EdgeInsets.all(24),
-            children: [
-              Text(
-                'Внешний вид',
-                style: Theme.of(context).textTheme.headlineSmall,
+    body: Form(
+      key: form,
+      child: PageList(
+        maxWidth: 720,
+        listKey: const ValueKey('settings-list'),
+        padding: const EdgeInsets.all(24),
+        children: [
+          Text('Внешний вид', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            key: const ValueKey('appearance-theme'),
+            initialValue: theme,
+            decoration: const InputDecoration(labelText: 'Тема'),
+            items: const [
+              DropdownMenuItem(
+                value: 'system',
+                child: Text('Как на устройстве'),
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                key: const ValueKey('appearance-theme'),
-                initialValue: theme,
-                decoration: const InputDecoration(labelText: 'Тема'),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'system',
-                    child: Text('Как на устройстве'),
-                  ),
-                  DropdownMenuItem(value: 'light', child: Text('Светлая')),
-                  DropdownMenuItem(value: 'dark', child: Text('Тёмная')),
-                ],
-                onChanged: (v) {
-                  setState(() => theme = v!);
+              DropdownMenuItem(value: 'light', child: Text('Светлая')),
+              DropdownMenuItem(value: 'dark', child: Text('Тёмная')),
+            ],
+            onChanged: (v) {
+              setState(() => theme = v!);
+              apply();
+            },
+          ),
+          const SizedBox(height: 20),
+          const Text('Основной цвет'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Цвета устройства'),
+                selected: accent == 'system',
+                onSelected: (_) {
+                  setState(() => accent = 'system');
                   apply();
                 },
               ),
-              const SizedBox(height: 20),
-              const Text('Основной цвет'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Цвета устройства'),
-                    selected: accent == 'system',
-                    onSelected: (_) {
-                      setState(() => accent = 'system');
-                      apply();
+              for (final entry in accentColors.entries)
+                ChoiceChip(
+                  avatar: CircleAvatar(
+                    backgroundColor: entry.value.$2,
+                    radius: 9,
+                  ),
+                  label: Text(entry.value.$1),
+                  selected: accent == entry.key,
+                  onSelected: (_) {
+                    setState(() => accent = entry.key);
+                    apply();
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            saveError.isEmpty
+                ? 'Настройки применяются автоматически'
+                : saveError,
+          ),
+          const SizedBox(height: 32),
+          Text('Яндекс Диск', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 10),
+          const Text(
+            'Укажите один аккаунт и одну папку на обоих устройствах. Рецепты доступны офлайн; при синхронизации изменения объединяются.',
+          ),
+          const SizedBox(height: 18),
+          DropdownButtonFormField<String>(
+            key: const ValueKey('sync-method'),
+            isExpanded: true,
+            initialValue: syncMethod,
+            decoration: const InputDecoration(labelText: 'Способ подключения'),
+            items: const [
+              DropdownMenuItem(
+                value: 'webdav',
+                child: Text(
+                  'WebDAV · пароль приложения',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'oauth',
+                child: Text(
+                  'OAuth · прежнее подключение',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+            onChanged: busy || widget.controller.syncing
+                ? null
+                : (value) {
+                    setState(() => syncMethod = value!);
+                    apply();
+                  },
+          ),
+          const SizedBox(height: 12),
+          if (syncMethod == 'webdav') ...[
+            const Text(
+              'Создайте пароль типа «Файлы WebDAV» в Яндекс ID → Безопасность → Пароли приложений. Регистрация OAuth-приложения не требуется. По условиям Яндекса нужен тариф Яндекс 360 с поддержкой WebDAV.',
+            ),
+            TextButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse('https://id.yandex.ru/security/app-passwords'),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Создать пароль приложения'),
+            ),
+            TextFormField(
+              key: const ValueKey('webdav-login'),
+              controller: webDavLogin,
+              enabled: !busy && !widget.controller.syncing,
+              onChanged: textChanged,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: const InputDecoration(labelText: 'Логин Яндекса'),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (value) =>
+                  value != null &&
+                      (value.contains(':') ||
+                          RegExp(r'[\x00-\x1f]').hasMatch(value))
+                  ? 'Введите логин без двоеточия и переноса строки'
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const ValueKey('webdav-password'),
+              controller: webDavPassword,
+              enabled: !busy && !widget.controller.syncing,
+              onChanged: (value) {
+                webDavPasswordEdited = true;
+                textChanged(value);
+              },
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                labelText: 'Пароль приложения «Файлы WebDAV»',
+                helperText: 'Используйте отдельный пароль приложения',
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              key: const ValueKey('webdav-check'),
+              onPressed: busy || widget.controller.syncing
+                  ? null
+                  : () async {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      if (!await apply() || !mounted) return;
+                      await widget.controller.checkWebDavConnection();
                     },
-                  ),
-                  for (final entry in accentColors.entries)
-                    ChoiceChip(
-                      avatar: CircleAvatar(
-                        backgroundColor: entry.value.$2,
-                        radius: 9,
+              icon: const Icon(Icons.cloud_done_outlined),
+              label: const Text('Проверить подключение'),
+            ),
+          ] else
+            FilledButton.icon(
+              onPressed: busy || widget.controller.syncing ? null : loginYandex,
+              icon: const Icon(Icons.login),
+              label: Text(
+                busy
+                    ? 'Ожидаю входа…'
+                    : widget.controller.yandexToken.isEmpty
+                    ? 'Войти в Яндекс Диск'
+                    : 'Войти в другой аккаунт',
+              ),
+            ),
+          const SizedBox(height: 12),
+          ListenableBuilder(
+            listenable: widget.controller,
+            builder: (context, _) {
+              final controller = widget.controller;
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        controller.syncing
+                            ? (controller.syncMessage.isEmpty
+                                  ? 'Синхронизация…'
+                                  : controller.syncMessage)
+                            : controller.syncMessage.isNotEmpty
+                            ? controller.syncMessage
+                            : !controller.cloudConfigured
+                            ? 'Яндекс Диск не подключён'
+                            : 'Данные подключения сохранены · рецепты доступны офлайн',
                       ),
-                      label: Text(entry.value.$1),
-                      selected: accent == entry.key,
-                      onSelected: (_) {
-                        setState(() => accent = entry.key);
-                        apply();
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                saveError.isEmpty
-                    ? 'Настройки применяются автоматически'
-                    : saveError,
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Яндекс Диск',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Укажите один аккаунт и одну папку на обоих устройствах. Рецепты доступны офлайн; при синхронизации изменения объединяются.',
-              ),
-              const SizedBox(height: 18),
-              DropdownButtonFormField<String>(
-                key: const ValueKey('sync-method'),
-                isExpanded: true,
-                initialValue: syncMethod,
-                decoration: const InputDecoration(
-                  labelText: 'Способ подключения',
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'webdav',
-                    child: Text(
-                      'WebDAV · пароль приложения',
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      if (controller.lastSynced != null)
+                        Text(
+                          'Последняя синхронизация: ${controller.lastSynced!.toLocal().hour.toString().padLeft(2, '0')}:${controller.lastSynced!.toLocal().minute.toString().padLeft(2, '0')}',
+                        ),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          TextButton.icon(
+                            onPressed:
+                                controller.syncing ||
+                                    !controller.cloudConfigured
+                                ? null
+                                : () async {
+                                    FocusManager.instance.primaryFocus
+                                        ?.unfocus();
+                                    if (await apply()) {
+                                      await controller.sync();
+                                    }
+                                  },
+                            icon: const Icon(Icons.sync),
+                            label: Text(
+                              controller.syncFailed
+                                  ? 'Повторить'
+                                  : 'Синхронизировать',
+                            ),
+                          ),
+                          if (controller.cloudConfigured)
+                            TextButton(
+                              onPressed: busy || controller.syncing
+                                  ? null
+                                  : () {
+                                      if (syncMethod == 'webdav') {
+                                        webDavPassword.clear();
+                                        webDavPasswordEdited = true;
+                                      } else {
+                                        diskToken.clear();
+                                        diskTokenEdited = true;
+                                      }
+                                      apply();
+                                    },
+                              child: const Text('Отключить Диск'),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
-                  DropdownMenuItem(
-                    value: 'oauth',
-                    child: Text(
-                      'OAuth · прежнее подключение',
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-                onChanged: busy || widget.controller.syncing
-                    ? null
-                    : (value) {
-                        setState(() => syncMethod = value!);
-                        apply();
-                      },
-              ),
-              const SizedBox(height: 12),
-              if (syncMethod == 'webdav') ...[
-                const Text(
-                  'Создайте пароль типа «Файлы WebDAV» в Яндекс ID → Безопасность → Пароли приложений. Регистрация OAuth-приложения не требуется. По условиям Яндекса нужен тариф Яндекс 360 с поддержкой WebDAV.',
                 ),
-                TextButton.icon(
-                  onPressed: () => launchUrl(
-                    Uri.parse('https://id.yandex.ru/security/app-passwords'),
-                    mode: LaunchMode.externalApplication,
-                  ),
-                  icon: const Icon(Icons.open_in_new),
-                  label: const Text('Создать пароль приложения'),
-                ),
+              );
+            },
+          ),
+          if (syncMethod == 'oauth')
+            ExpansionTile(
+              title: const Text('Настройка подключения'),
+              children: [
                 TextFormField(
-                  key: const ValueKey('webdav-login'),
-                  controller: webDavLogin,
-                  enabled: !busy && !widget.controller.syncing,
+                  controller: clientId,
                   onChanged: textChanged,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  decoration: const InputDecoration(labelText: 'Логин Яндекса'),
+                  decoration: const InputDecoration(
+                    labelText: 'Публичный Client ID Яндекс OAuth',
+                  ),
                   autovalidateMode: AutovalidateMode.onUserInteraction,
-                  validator: (value) =>
-                      value != null &&
-                          (value.contains(':') ||
-                              RegExp(r'[\x00-\x1f]').hasMatch(value))
-                      ? 'Введите логин без двоеточия и переноса строки'
-                      : null,
+                  validator: (s) =>
+                      s == null ||
+                          s.trim().isEmpty ||
+                          RegExp(r'^[a-fA-F0-9]{32}$').hasMatch(s.trim())
+                      ? null
+                      : 'Client ID содержит 32 шестнадцатеричных символа',
                 ),
-                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: setupYandex,
+                  child: const Text('Как зарегистрировать приложение'),
+                ),
                 TextFormField(
-                  key: const ValueKey('webdav-password'),
-                  controller: webDavPassword,
-                  enabled: !busy && !widget.controller.syncing,
+                  controller: diskToken,
                   onChanged: (value) {
-                    webDavPasswordEdited = true;
+                    diskTokenEdited = true;
                     textChanged(value);
                   },
                   obscureText: true,
                   enableSuggestions: false,
                   autocorrect: false,
                   decoration: const InputDecoration(
-                    labelText: 'Пароль приложения «Файлы WebDAV»',
-                    helperText: 'Используйте отдельный пароль приложения',
+                    labelText: 'Токен для старого подключения (необязательно)',
                   ),
                 ),
                 const SizedBox(height: 12),
-                FilledButton.icon(
-                  key: const ValueKey('webdav-check'),
-                  onPressed: busy || widget.controller.syncing
-                      ? null
-                      : () async {
-                          FocusManager.instance.primaryFocus?.unfocus();
-                          if (!await apply() || !mounted) return;
-                          await widget.controller.checkWebDavConnection();
-                        },
-                  icon: const Icon(Icons.cloud_done_outlined),
-                  label: const Text('Проверить подключение'),
-                ),
-              ] else
-                FilledButton.icon(
-                  onPressed: busy || widget.controller.syncing
-                      ? null
-                      : loginYandex,
-                  icon: const Icon(Icons.login),
-                  label: Text(
-                    busy
-                        ? 'Ожидаю входа…'
-                        : widget.controller.yandexToken.isEmpty
-                        ? 'Войти в Яндекс Диск'
-                        : 'Войти в другой аккаунт',
-                  ),
-                ),
-              const SizedBox(height: 12),
-              ListenableBuilder(
-                listenable: widget.controller,
-                builder: (context, _) {
-                  final controller = widget.controller;
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            controller.syncing
-                                ? (controller.syncMessage.isEmpty
-                                      ? 'Синхронизация…'
-                                      : controller.syncMessage)
-                                : controller.syncMessage.isNotEmpty
-                                ? controller.syncMessage
-                                : !controller.cloudConfigured
-                                ? 'Яндекс Диск не подключён'
-                                : 'Данные подключения сохранены · рецепты доступны офлайн',
-                          ),
-                          if (controller.lastSynced != null)
-                            Text(
-                              'Последняя синхронизация: ${controller.lastSynced!.toLocal().hour.toString().padLeft(2, '0')}:${controller.lastSynced!.toLocal().minute.toString().padLeft(2, '0')}',
-                            ),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              TextButton.icon(
-                                onPressed:
-                                    controller.syncing ||
-                                        !controller.cloudConfigured
-                                    ? null
-                                    : () async {
-                                        FocusManager.instance.primaryFocus
-                                            ?.unfocus();
-                                        if (await apply()) {
-                                          await controller.sync();
-                                        }
-                                      },
-                                icon: const Icon(Icons.sync),
-                                label: Text(
-                                  controller.syncFailed
-                                      ? 'Повторить'
-                                      : 'Синхронизировать',
-                                ),
-                              ),
-                              if (controller.cloudConfigured)
-                                TextButton(
-                                  onPressed: busy || controller.syncing
-                                      ? null
-                                      : () {
-                                          if (syncMethod == 'webdav') {
-                                            webDavPassword.clear();
-                                            webDavPasswordEdited = true;
-                                          } else {
-                                            diskToken.clear();
-                                            diskTokenEdited = true;
-                                          }
-                                          apply();
-                                        },
-                                  child: const Text('Отключить Диск'),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              if (syncMethod == 'oauth')
-                ExpansionTile(
-                  title: const Text('Настройка подключения'),
-                  children: [
-                    TextFormField(
-                      controller: clientId,
-                      onChanged: textChanged,
-                      decoration: const InputDecoration(
-                        labelText: 'Публичный Client ID Яндекс OAuth',
-                      ),
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (s) =>
-                          s == null ||
-                              s.trim().isEmpty ||
-                              RegExp(r'^[a-fA-F0-9]{32}$').hasMatch(s.trim())
-                          ? null
-                          : 'Client ID содержит 32 шестнадцатеричных символа',
-                    ),
-                    TextButton(
-                      onPressed: setupYandex,
-                      child: const Text('Как зарегистрировать приложение'),
-                    ),
-                    TextFormField(
-                      controller: diskToken,
-                      onChanged: (value) {
-                        diskTokenEdited = true;
-                        textChanged(value);
-                      },
-                      obscureText: true,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      decoration: const InputDecoration(
-                        labelText:
-                            'Токен для старого подключения (необязательно)',
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: folder,
-                enabled: !busy && !widget.controller.syncing,
-                onChanged: textChanged,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                decoration: const InputDecoration(
-                  labelText: 'Папка базы',
-                  hintText: '/RecipeVault',
-                ),
-                validator: (s) =>
-                    s != null &&
-                        s.startsWith('/') &&
-                        s != '/' &&
-                        !s.contains('..')
-                    ? null
-                    : 'Укажите папку, например /RecipeVault',
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Автоматическая синхронизация'),
-                subtitle: const Text(
-                  'После изменений и каждые 3 минуты, пока приложение открыто',
-                ),
-                value: autoSync,
-                onChanged: (v) {
-                  setState(() => autoSync = v);
-                  apply();
-                },
-              ),
-              const SizedBox(height: 32),
-              if (LocalRecipeAi.supported)
-                LocalAiSettings(
-                  enabled: localAi,
-                  onChanged: (value) {
-                    setState(() => localAi = value);
-                    apply();
-                  },
-                ),
-              Text(
-                'Импорт сайтов и YouTube',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Сайты и текст разбираются на устройстве. Дополнительный сервис можно использовать при выключенном локальном ИИ.',
-              ),
-              const SizedBox(height: 18),
-              TextFormField(
-                controller: server,
-                onChanged: textChanged,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                decoration: const InputDecoration(
-                  labelText: 'Адрес сервиса',
-                  hintText: 'https://recipes.example.com',
-                ),
-                validator: (s) {
-                  if (s == null || s.trim().isEmpty) return null;
-                  final uri = Uri.tryParse(s.trim());
-                  return uri != null &&
-                          ['https', 'http'].contains(uri.scheme) &&
-                          uri.host.isNotEmpty &&
-                          uri.userInfo.isEmpty
-                      ? null
-                      : 'Введите адрес http:// или https://';
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: apiToken,
-                onChanged: textChanged,
-                obscureText: true,
-                enableSuggestions: false,
-                autocorrect: false,
-                decoration: const InputDecoration(
-                  labelText: 'Ключ сервиса, если задан',
-                ),
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Перенос и резервная копия',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: export,
-                icon: const Icon(Icons.file_upload_outlined),
-                label: const Text('Экспортировать recipes.json'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: import,
-                icon: const Icon(Icons.file_download_outlined),
-                label: const Text('Импортировать и объединить базу'),
-              ),
-              const SizedBox(height: 24),
-              const SizedBox(height: 24),
-            ],
+              ],
+            ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: folder,
+            enabled: !busy && !widget.controller.syncing,
+            onChanged: textChanged,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            decoration: const InputDecoration(
+              labelText: 'Папка базы',
+              hintText: '/RecipeVault',
+            ),
+            validator: (s) =>
+                s != null && s.startsWith('/') && s != '/' && !s.contains('..')
+                ? null
+                : 'Укажите папку, например /RecipeVault',
           ),
-        ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Автоматическая синхронизация'),
+            subtitle: const Text(
+              'После изменений и каждые 3 минуты, пока приложение открыто',
+            ),
+            value: autoSync,
+            onChanged: (v) {
+              setState(() => autoSync = v);
+              apply();
+            },
+          ),
+          const SizedBox(height: 32),
+          if (LocalRecipeAi.supported)
+            LocalAiSettings(
+              enabled: localAi,
+              onChanged: (value) {
+                setState(() => localAi = value);
+                apply();
+              },
+            ),
+          Text(
+            'Импорт сайтов и YouTube',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Сайты и текст разбираются на устройстве. Дополнительный сервис можно использовать при выключенном локальном ИИ.',
+          ),
+          const SizedBox(height: 18),
+          TextFormField(
+            controller: server,
+            onChanged: textChanged,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            decoration: const InputDecoration(
+              labelText: 'Адрес сервиса',
+              hintText: 'https://recipes.example.com',
+            ),
+            validator: (s) {
+              if (s == null || s.trim().isEmpty) return null;
+              final uri = Uri.tryParse(s.trim());
+              return uri != null &&
+                      ['https', 'http'].contains(uri.scheme) &&
+                      uri.host.isNotEmpty &&
+                      uri.userInfo.isEmpty
+                  ? null
+                  : 'Введите адрес http:// или https://';
+            },
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: apiToken,
+            onChanged: textChanged,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            decoration: const InputDecoration(
+              labelText: 'Ключ сервиса, если задан',
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Перенос и резервная копия',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: export,
+            icon: const Icon(Icons.file_upload_outlined),
+            label: const Text('Экспортировать recipes.json'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: import,
+            icon: const Icon(Icons.file_download_outlined),
+            label: const Text('Импортировать и объединить базу'),
+          ),
+          const SizedBox(height: 24),
+          const SizedBox(height: 24),
+        ],
       ),
     ),
   );

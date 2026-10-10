@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../widgets/page_list.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/document_import.dart';
 import '../services/import_job.dart';
@@ -127,115 +128,107 @@ class _DocumentImportScreenState extends State<DocumentImportScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Импорт документа')),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 820),
-        child: ListView(
-          padding: const EdgeInsets.all(24),
+    body: PageList(
+      maxWidth: 820,
+      padding: const EdgeInsets.all(24),
+      children: [
+        const Text(
+          'Скриншот, фотография или PDF. Распознанный текст можно исправить перед разбором рецепта.',
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            const Text(
-              'Скриншот, фотография или PDF. Распознанный текст можно исправить перед разбором рецепта.',
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  onPressed: busy ? null : choose,
-                  icon: const Icon(Icons.attach_file),
-                  label: const Text('Выбрать файл'),
-                ),
-                if (Platform.isAndroid)
-                  OutlinedButton.icon(
-                    onPressed: busy ? null : () => choose(camera: true),
-                    icon: const Icon(Icons.camera_alt_outlined),
-                    label: const Text('Сфотографировать'),
-                  ),
-              ],
-            ),
-            if (name.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(name),
-              ),
-            if (path.toLowerCase().endsWith('.pdf')) ...[
-              const Text('Диапазон PDF, до 20 страниц за один импорт'),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: first,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'С первой страницы',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: last,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'По страницу',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              TextButton(
-                onPressed: busy ? null : recognize,
-                child: const Text('Распознать выбранные страницы'),
-              ),
-            ],
-            if (busy) ...[
-              const SizedBox(height: 16),
-              const LinearProgressIndicator(),
-              TextButton(
-                onPressed: () {
-                  work?.cancel();
-                  setState(() => status = 'Останавливаю распознавание…');
-                },
-                child: const Text('Отмена'),
-              ),
-            ],
-            if (status.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(status),
-              ),
-            for (final warning in warnings)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(warning),
-              ),
-            TextField(
-              controller: text,
-              minLines: 8,
-              maxLines: null,
-              scrollPhysics: const NeverScrollableScrollPhysics(),
-              decoration: const InputDecoration(
-                labelText: 'Распознанный текст',
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: source,
-              decoration: const InputDecoration(
-                labelText: 'Ссылка на источник (необязательно)',
-              ),
-            ),
-            const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: busy ? null : submit,
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('Разобрать рецепт'),
+              onPressed: busy ? null : choose,
+              icon: const Icon(Icons.attach_file),
+              label: const Text('Выбрать файл'),
             ),
+            if (Platform.isAndroid)
+              OutlinedButton.icon(
+                onPressed: busy ? null : () => choose(camera: true),
+                icon: const Icon(Icons.camera_alt_outlined),
+                label: const Text('Сфотографировать'),
+              ),
           ],
         ),
-      ),
+        if (name.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(name),
+          ),
+        if (path.toLowerCase().endsWith('.pdf')) ...[
+          const Text('Диапазон PDF, до 20 страниц за один импорт'),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: first,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'С первой страницы',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: last,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'По страницу'),
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            onPressed: busy ? null : recognize,
+            child: const Text('Распознать выбранные страницы'),
+          ),
+        ],
+        if (busy) ...[
+          const SizedBox(height: 16),
+          const LinearProgressIndicator(),
+          TextButton(
+            onPressed: () {
+              work?.cancel();
+              setState(() => status = 'Останавливаю распознавание…');
+            },
+            child: const Text('Отмена'),
+          ),
+        ],
+        if (status.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(status),
+          ),
+        for (final warning in warnings)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(warning),
+          ),
+        TextField(
+          controller: text,
+          minLines: 8,
+          maxLines: null,
+          scrollPhysics: const NeverScrollableScrollPhysics(),
+          decoration: const InputDecoration(labelText: 'Распознанный текст'),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: source,
+          decoration: const InputDecoration(
+            labelText: 'Ссылка на источник (необязательно)',
+          ),
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: busy ? null : submit,
+          icon: const Icon(Icons.auto_awesome),
+          label: const Text('Разобрать рецепт'),
+        ),
+      ],
     ),
   );
 }

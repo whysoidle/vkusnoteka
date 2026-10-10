@@ -14,15 +14,17 @@ import '../theme/macos_glass.dart';
 import '../widgets/mac_home_shell.dart';
 import '../widgets/mac_motion.dart';
 import '../branding.dart';
+import '../widgets/desktop_swipe.dart';
+import 'search.dart';
 
 class HomeScreen extends StatefulWidget {
   final AppController controller;
   const HomeScreen({super.key, required this.controller});
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final composer = TextEditingController(), search = TextEditingController();
   final searchFocus = FocusNode();
   final importFocus = FocusNode();
@@ -83,11 +85,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       builder: (_) => SettingsScreen(controller: widget.controller),
     ),
   );
+  bool adding = false;
+  void searchCatalog() {
+    if (ModalRoute.of(context)?.isCurrent != true) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RecipeSearchScreen(controller: widget.controller),
+        ),
+      );
+      return;
+    }
+    setState(() => tab = 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) searchFocus.requestFocus();
+    });
+  }
+
   Future<void> add() async {
+    if (adding) return;
+    adding = true;
     final recipe = await Navigator.push<Recipe>(
       context,
       MaterialPageRoute(builder: (_) => RecipeEditor(recipe: Recipe.blank())),
     );
+    adding = false;
     if (recipe == null) return;
     try {
       if (!mounted) return;
@@ -225,72 +247,84 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        for (final value in [
-                          'Все рецепты',
-                          'Избранное',
-                          'Черновики',
-                        ])
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              selected: filter == value,
-                              label: Text(value),
-                              onSelected: (_) => setState(() => filter = value),
+                  DesktopSwipe(
+                    blockNavigation: true,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final value in [
+                            'Все рецепты',
+                            'Избранное',
+                            'Черновики',
+                          ])
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: FilterChip(
+                                selected: filter == value,
+                                label: Text(value),
+                                onSelected: (_) =>
+                                    setState(() => filter = value),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        for (final value in [
-                          'Все',
-                          ...{
-                            ...categories.where((c) => c != 'Без категории'),
-                            ...recipes.map((r) => r.category),
-                          },
-                        ])
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              selected: category == value,
-                              label: Text(value),
-                              onSelected: (_) =>
-                                  setState(() => category = value),
+                  DesktopSwipe(
+                    blockNavigation: true,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final value in [
+                            'Все',
+                            ...{
+                              ...categories.where((c) => c != 'Без категории'),
+                              ...recipes.map((r) => r.category),
+                            },
+                          ])
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                selected: category == value,
+                                label: Text(value),
+                                onSelected: (_) =>
+                                    setState(() => category = value),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        for (final name in {
-                          '',
-                          'На каждый день',
-                          'До 30 минут',
-                          'Хочу приготовить',
-                          ...recipes.expand((r) => r.collections),
-                        })
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(name.isEmpty ? 'Все подборки' : name),
-                              selected: collection == name,
-                              onSelected: (_) =>
-                                  setState(() => collection = name),
+                  DesktopSwipe(
+                    blockNavigation: true,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final name in {
+                            '',
+                            'На каждый день',
+                            'До 30 минут',
+                            'Хочу приготовить',
+                            ...recipes.expand((r) => r.collections),
+                          })
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(
+                                  name.isEmpty ? 'Все подборки' : name,
+                                ),
+                                selected: collection == name,
+                                onSelected: (_) =>
+                                    setState(() => collection = name),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   Align(
@@ -474,31 +508,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         );
         final c = Theme.of(context).colorScheme;
         if (isMac(context)) {
-          return MacHomeShell(
-            controller: widget.controller,
-            catalog: catalog(),
-            chat: chat,
-            tab: tab,
-            filter: filter,
-            collection: collection,
-            onTab: (value) {
-              setState(() => tab = value);
-              if (value == 1) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) importFocus.requestFocus();
-                });
-              }
-            },
-            onFilter: (value) => setState(() => filter = value),
-            onCollection: (value) => setState(() => collection = value),
-            onAdd: add,
-            onSettings: settings,
-            onSearch: () {
-              setState(() => tab = 0);
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) searchFocus.requestFocus();
-              });
-            },
+          return DesktopSwipe(
+            onLeft: () => setState(() => tab = 1),
+            onRight: () => setState(() => tab = 0),
+            child: MacHomeShell(
+              controller: widget.controller,
+              catalog: catalog(),
+              chat: chat,
+              tab: tab,
+              filter: filter,
+              collection: collection,
+              onTab: (value) {
+                setState(() => tab = value);
+                if (value == 1) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) importFocus.requestFocus();
+                  });
+                }
+              },
+              onFilter: (value) => setState(() => filter = value),
+              onCollection: (value) => setState(() => collection = value),
+              onAdd: add,
+              onSettings: settings,
+            ),
           );
         }
         return Scaffold(
@@ -590,9 +622,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                   SizedBox(width: 410, child: chat),
                                 ],
                               )
-                            : IndexedStack(
-                                index: tab,
-                                children: [catalog(), chat],
+                            : DesktopSwipe(
+                                onLeft: () => setState(() => tab = 1),
+                                onRight: () => setState(() => tab = 0),
+                                child: IndexedStack(
+                                  index: tab,
+                                  children: [catalog(), chat],
+                                ),
                               ),
                       ),
                     ],

@@ -12,6 +12,7 @@ import '../widgets/save_recipe.dart';
 import '../services/document_import.dart';
 import 'document_import.dart';
 import '../theme/macos_glass.dart';
+import '../widgets/desktop_swipe.dart';
 
 class ChatMessage {
   final String text;
@@ -237,6 +238,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     final glass = isMac(context) && !MacGlassPreferences.reduced(context);
+    final desktop = isDesktopNavigation(context);
     return Column(
       children: [
         Padding(
@@ -244,10 +246,12 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: c.primaryContainer,
+                backgroundColor: desktop
+                    ? c.primary.withValues(alpha: glass ? .10 : .08)
+                    : c.primaryContainer,
                 child: Icon(
                   Icons.auto_awesome_outlined,
-                  color: c.onPrimaryContainer,
+                  color: desktop ? c.primary : c.onPrimaryContainer,
                 ),
               ),
               const SizedBox(width: 14),

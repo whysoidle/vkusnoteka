@@ -1,0 +1,28 @@
+Vkusnoteka / Вкуснотека
+Copyright (C) 2026 whysoidle and contributors
+SPDX-License-Identifier: GPL-3.0-only
+
+The original Vkusnoteka application code, documentation, project artwork and
+build scripts are licensed under the GNU General Public License, version 3
+only. This grant also covers the original project material in release 1.0.8
+and its corresponding source archive.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+more details. You should have received a copy of the GNU General Public
+License along with this program. If not, see https://www.gnu.org/licenses/.
+
+The complete license text is in LICENSE. Third-party software, model weights,
+fonts and other third-party material retain their own licenses and notices;
+they are not relicensed by this notice. See THIRD_PARTY.md in the repository.
+User recipes, photos, credentials and other personal data are not covered
+by this software license.
+
+Project and corresponding source:
+https://github.com/whysoidle/vkusnoteka
+https://github.com/whysoidle/vkusnoteka/releases/tag/v1.0.8

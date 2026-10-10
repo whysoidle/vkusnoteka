@@ -1,65 +1,52 @@
-# Windows-сборка через GitHub
+# Собрать Windows-версию через GitHub
 
-Репозиторий проекта: [whysoidle/vkusnoteka](https://github.com/whysoidle/vkusnoteka), приватный. Текущая папка проекта связана с ним через Git remote `origin`; изменения видны в Source Control VS Code.
+Этим способом можно пользоваться с Mac: компиляция выполняется на Windows-сервере GitHub, а готовые файлы скачиваются через браузер. Для установки уже готовой версии откройте [Releases](https://github.com/whysoidle/vkusnoteka/releases/latest).
 
-## Повторная сборка
+## Через сайт
 
-1. Загрузите нужные изменения в `main`.
-2. Откройте **Actions → Build Android, Windows and macOS → Run workflow**.
-3. Выберите `main` и `platform: windows`.
-4. После прохождения общих проверок задача `windows` соберёт приложение через Flutter и упакует его через Inno Setup.
-5. Скачайте **Artifacts → Vkusnoteka-Windows-Setup**. Внутри находятся установщик с номером версии, portable ZIP и SHA-256.
+1. Отправьте нужные изменения в ветку `main` репозитория [whysoidle/vkusnoteka](https://github.com/whysoidle/vkusnoteka).
+2. Откройте **Actions → Build Android, Windows and macOS**.
+3. Нажмите **Run workflow**, выберите ветку `main` и `platform: windows`.
+4. Дождитесь завершения задач `checks` и `windows`.
+5. Внизу страницы запуска скачайте **Artifacts → Vkusnoteka-Windows-Setup**.
 
-Ручной запуск `platform: windows` пропускает Android/macOS. Значение `all` собирает три платформы. Автоматические запуски при push в `main` и pull request сохраняют проверки и сборки всех платформ.
+В артефакте будут EXE-установщик, portable ZIP и SHA-256. Артефакт сначала нужно распаковать. Portable-архив также распакуйте целиком, затем запустите `recipe_vault.exe`.
 
-## Доступ из VS Code
+`platform: windows` собирает только Windows после общих проверок. `all` запускает сборки трёх платформ. Обычные push в `main` и pull request также запускают workflow; коммиты только с документацией в этом проекте можно отмечать `[skip ci]`.
 
-Плагины Codex не поддерживаются в IDE-расширении. Для загрузки исходников и управления Actions используется GitHub CLI; отдельное расширение VS Code для этого не требуется.
+## Через терминал VS Code
 
-На этом Mac CLI установлен в `~/.local/bin/gh` и настроен для HTTPS. При необходимости повторного входа выполните в терминале:
-
-```bash
-~/.local/bin/gh auth login --hostname github.com --git-protocol https --web --scopes workflow
-```
-
-Вход подтверждается на сайте GitHub. Секреты Android нужны только для подписи Android APK; сборка Windows использует встроенный токен GitHub Actions с `contents: read`.
-
-Пример запуска из терминала:
+Если GitHub CLI уже установлен, выполните:
 
 ```bash
-~/.local/bin/gh workflow run build.yml --repo whysoidle/vkusnoteka --ref main -f platform=windows
+gh auth login --hostname github.com --git-protocol https --web --scopes workflow
 ```
 
-Сборка x64 предназначена для Windows. Установщик не подписан коммерческим сертификатом. Идентификатор приложения и каталог данных сохраняются при обновлении: техническое поле `ProductName` остаётся прежним, а отображаемое имя — «Вкуснотека».
+Подтвердите вход в браузере. Затем из терминала:
 
-Источники: [вход GitHub CLI](https://cli.github.com/manual/gh_auth_login), [ручной запуск Actions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [плагины Codex и поддерживаемые интерфейсы](https://learn.chatgpt.com/docs/plugins).
+```bash
+gh workflow run build.yml --repo whysoidle/vkusnoteka --ref main -f platform=windows
+gh run list --repo whysoidle/vkusnoteka --workflow build.yml
+```
 
-## Выпуск Windows 1.0.8
+Номер запуска из списка можно использовать для скачивания:
 
-[Успешный запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/38038774625), commit `0045cae08271dc9eec501e32df91f64917801eec`. Прошли 183 теста Flutter, 23 теста Python, анализатор, нативный тест процесса и проверка настоящей модели ИИ. Установщик `dist/Vkusnoteka-Windows-1.0.8-Setup.exe` и portable ZIP скачаны и проверены по SHA-256; версия PE — 1.0.8/build 18. Android и macOS собраны на Mac с тем же номером версии и build.
+```bash
+gh run download НОМЕР_ЗАПУСКА --repo whysoidle/vkusnoteka --name Vkusnoteka-Windows-Setup --dir dist
+```
 
-Общий пересчёт поддерживает количество до/после названия, запятые, скобки, запись без пробела, дроби, диапазоны и русские числительные. Проценты и вес отдельной упаковки сохраняются. Локальный ИИ, база и оформление платформ сохранены. [Описание выпуска](release-1.0.8.md), [полный отчёт](validation.md).
+Отдельное расширение VS Code для этих команд не требуется. Если CLI установлен в `~/.local/bin/gh`, используйте этот путь вместо `gh`.
 
-## Выпуск Windows 1.0.7
+## Что проверяет сборка
 
-[Успешный запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/38034865606), commit `b121821caf715bde1c63ea0a3a3cb02021496e36`. Прошли 168 тестов Flutter, 23 теста Python, анализатор, нативный тест процесса и проверка настоящей модели ИИ. Установщик `dist/Vkusnoteka-Windows-1.0.7-Setup.exe` и portable ZIP скачаны и проверены по SHA-256. Android и macOS собраны на Mac с тем же номером 1.0.7/build 17.
+Сначала выполняются тесты Python, анализ Flutter и Flutter-тесты. Затем собирается Windows-приложение, добавляются библиотеки и движок ИИ, создаются установщик и portable-архив. Отдельно проверяются завершение процесса ИИ и разбор настоящей моделью.
 
-В Windows исправлена прокрутка пустых полей страниц, приглушена иконка импорта, добавлены жесты и глобальные `Ctrl+N`/`Ctrl+F`. Локальный ИИ из 1.0.6 сохранён; модель повторно скачивать после обновления не нужно. [Описание выпуска](release-1.0.7.md), [полный отчёт](validation.md).
+Этот workflow создаёт **Artifacts**, но сам не публикует **Release**. Готовые установщики для пользователей находятся в [разделе выпусков](https://github.com/whysoidle/vkusnoteka/releases).
 
-## Выпуск Windows 1.0.6 с локальным ИИ
+Для Windows-сборки секреты подписи Android не нужны. Они требуются только для выпуска APK с постоянной подписью.
 
-[Успешный запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/37987056030), commit `7a20dd15536a7a393a223e31ac18ffdbd7d9f6f8`. Прошли 158 тестов Flutter, 23 теста Python, анализатор, нативный тест процесса и разбор настоящей Qwen3 4B на Windows CPU. В артефакте `Vkusnoteka-Windows-AI-Validation` сохранены проверенные запросы и ответы модели.
+## Проверенный выпуск 1.0.8
 
-- `dist/Vkusnoteka-Windows-1.0.6-Setup.exe` — установщик, 28 845 872 байта.
-- `dist/Vkusnoteka-Windows-1.0.6-Portable.zip` — portable-пакет, 44 207 312 байт.
-- `dist/Vkusnoteka-Windows-1.0.6.sha256` — проверенные контрольные суммы.
+[Запуск 38038774625](https://github.com/whysoidle/vkusnoteka/actions/runs/38038774625) завершился успешно: 183 теста Flutter, 23 теста Python, нативный тест и настоящий разбор Qwen3 4B. Готовые файлы проверены по контрольным суммам. [Отчёт](validation.md)
 
-После установки откройте **Настройки → Локальный ИИ → Скачать модель**. Движок уже включён в приложение; Ollama и Python устанавливать не нужно. Qwen3 4B Q4_K_M загружается отдельно и занимает около 2,50 ГБ. Рекомендуется от 8 ГБ оперативной памяти и 3,5 ГБ свободного места; для ИИ нужны Windows 10 версии 1903 или новее либо Windows 11, x64. Проверены русские пути с пробелами, отмена и освобождение процесса. Ручная проверка интерфейса на Windows не выполнялась. [Правила разбора](release-1.0.6.md), [отчёт о проверках](validation.md).
-
-## Первый выпуск Windows 1.0.5
-
-[Запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/37977871653) собран из commit `4daf79cace47767829f98e4ceab52fac29a3c307`. На CI прошли 150 тестов Flutter и 23 теста Python, затем Windows-сервер собрал установщик и portable ZIP. Скачанные файлы проверены по SHA-256; проверены версия, бренд, x64, Visual C++ runtime и состав portable-пакета. Ручная проверка интерфейса Windows не выполнялась.
-
-- `dist/Vkusnoteka-Windows-1.0.5-Setup.exe` — установщик, 18 505 296 байт.
-- `dist/Vkusnoteka-Windows-1.0.5-Portable.zip` — portable-пакет, 23 155 181 байт.
-- `dist/Vkusnoteka-Windows-1.0.5.sha256` — контрольные суммы.
+При переносе проекта в другой репозиторий замените `whysoidle/vkusnoteka` в командах на свой `владелец/репозиторий`.

@@ -1,9 +1,21 @@
-# Native Mac services
+# Нативные компоненты macOS
 
-Apple Vision recognizes Russian and English recipe images locally. `RecipeModelJob` calls the official LiteRT-LM 0.18.0 C API on a background queue with the same schema, Qwen template and source-evidence checks used on Android. The CPU backend uses four threads. Cancellation protects the active C handle from concurrent deletion.
+Этот модуль подключает к Flutter системное распознавание текста, локальную модель и оформление окна. Для использования готового приложения отдельно настраивать его не нужно.
 
-The universal arm64/x86_64 binary is fetched by Swift Package Manager from Google's release, with the upstream SHA-256 checksum pinned in Package.swift. Model weights remain a separately verified download in the application support container; neither the source archive nor the application bundle contains them. Temporary inference caches are removed after each request. No Python or external AI server is required on Mac.
+## Текст на изображениях
 
-The native window uses NSGlassEffectView on macOS 26+, with NSVisualEffectView on earlier versions. Flutter reserves the titlebar and respects changes to the system Reduce Transparency preference. Native window, sandboxed OCR and login Keychain tests are in RunnerTests.
+Apple Vision распознаёт русский и английский текст локально. Поддержка языков зависит от версии системы; результат передаётся в общий разбор рецепта.
 
-See the bundled Resources/LiteRT-LM-LICENSE.txt and NOTICE.txt for runtime attribution.
+## Локальный ИИ
+
+`RecipeModelJob` вызывает C API LiteRT-LM 0.18.0 в фоновой очереди. Используются CPU и четыре потока. Схема ответа, шаблон Qwen и проверки по исходному тексту общие с Android. При отмене активный C-дескриптор защищён от одновременного удаления.
+
+Swift Package Manager загружает универсальный бинарник arm64/x86_64 из выпуска Google. Контрольная сумма закреплена в `Package.swift`. Веса модели скачиваются отдельно, проверяются и хранятся в папке данных приложения. Временный кеш разбора удаляется после запроса. Python и внешний сервер для локального ИИ на Mac не нужны.
+
+## Окно и тесты
+
+На macOS 26+ используется `NSGlassEffectView`, на более ранних версиях — `NSVisualEffectView`. Flutter оставляет место для заголовка окна и учитывает изменения системной настройки «Уменьшение прозрачности».
+
+Проверки окна, OCR в песочнице и доступа к Связке ключей находятся в `RunnerTests`. Общая инструкция сборки — в [документации проекта](../../../docs/building.md).
+
+Лицензия движка и сведения об авторах находятся в `Resources/LiteRT-LM-LICENSE.txt` и `NOTICE.txt`.

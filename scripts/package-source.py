@@ -8,7 +8,7 @@ target.parent.mkdir(exist_ok=True)
 skip_dirs = {".git", ".gradle", ".dart_tool", ".idea", "build", "ephemeral", ".symlinks",
              "__pycache__", ".pytest_cache", ".venv", ".build", ".swiftpm", "Pods", "xcuserdata"}
 skip_names = {"key.properties", "local.properties", ".flutter-plugins-dependencies", ".env", ".DS_Store"}
-paths = [root / "README.md", root / ".gitignore"]
+paths = [root / "README.md", root / "CHANGELOG.md", root / ".gitignore"]
 for folder in ("app", "backend", "docs", "packaging", "scripts", ".github"):
     for file in (root / folder).rglob("*"):
         if file.is_symlink() or not file.is_file():

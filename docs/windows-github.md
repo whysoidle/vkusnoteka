@@ -34,6 +34,12 @@
 
 Источники: [вход GitHub CLI](https://cli.github.com/manual/gh_auth_login), [ручной запуск Actions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [плагины Codex и поддерживаемые интерфейсы](https://learn.chatgpt.com/docs/plugins).
 
+## Выпуск Windows 1.0.8
+
+[Успешный запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/38038774625), commit `0045cae08271dc9eec501e32df91f64917801eec`. Прошли 183 теста Flutter, 23 теста Python, анализатор, нативный тест процесса и проверка настоящей модели ИИ. Установщик `dist/Vkusnoteka-Windows-1.0.8-Setup.exe` и portable ZIP скачаны и проверены по SHA-256; версия PE — 1.0.8/build 18. Android и macOS собраны на Mac с тем же номером версии и build.
+
+Общий пересчёт поддерживает количество до/после названия, запятые, скобки, запись без пробела, дроби, диапазоны и русские числительные. Проценты и вес отдельной упаковки сохраняются. Локальный ИИ, база и оформление платформ сохранены. [Описание выпуска](release-1.0.8.md), [полный отчёт](validation.md).
+
 ## Выпуск Windows 1.0.7
 
 [Успешный запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/38034865606), commit `b121821caf715bde1c63ea0a3a3cb02021496e36`. Прошли 168 тестов Flutter, 23 теста Python, анализатор, нативный тест процесса и проверка настоящей модели ИИ. Установщик `dist/Vkusnoteka-Windows-1.0.7-Setup.exe` и portable ZIP скачаны и проверены по SHA-256. Android и macOS собраны на Mac с тем же номером 1.0.7/build 17.

@@ -34,6 +34,12 @@
 
 Источники: [вход GitHub CLI](https://cli.github.com/manual/gh_auth_login), [ручной запуск Actions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [плагины Codex и поддерживаемые интерфейсы](https://learn.chatgpt.com/docs/plugins).
 
+## Выпуск Windows 1.0.7
+
+[Успешный запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/38034865606), commit `b121821caf715bde1c63ea0a3a3cb02021496e36`. Прошли 168 тестов Flutter, 23 теста Python, анализатор, нативный тест процесса и проверка настоящей модели ИИ. Установщик `dist/Vkusnoteka-Windows-1.0.7-Setup.exe` и portable ZIP скачаны и проверены по SHA-256. Android и macOS собраны на Mac с тем же номером 1.0.7/build 17.
+
+В Windows исправлена прокрутка пустых полей страниц, приглушена иконка импорта, добавлены жесты и глобальные `Ctrl+N`/`Ctrl+F`. Локальный ИИ из 1.0.6 сохранён; модель повторно скачивать после обновления не нужно. [Описание выпуска](release-1.0.7.md), [полный отчёт](validation.md).
+
 ## Выпуск Windows 1.0.6 с локальным ИИ
 
 [Успешный запуск Actions](https://github.com/whysoidle/vkusnoteka/actions/runs/37987056030), commit `7a20dd15536a7a393a223e31ac18ffdbd7d9f6f8`. Прошли 158 тестов Flutter, 23 теста Python, анализатор, нативный тест процесса и разбор настоящей Qwen3 4B на Windows CPU. В артефакте `Vkusnoteka-Windows-AI-Validation` сохранены проверенные запросы и ответы модели.
